@@ -1,100 +1,172 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.sql.*, com.busbooking.dao.DBConnection" %>
 <%@ page session="true" %>
+
+<%
+    Integer userId = (Integer) session.getAttribute("userId");
+    if (userId == null) {
+        response.sendRedirect("login.jsp?error=Please login to book a bus.");
+        return;
+    }
+
+    int busId = Integer.parseInt(request.getParameter("busId"));
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+
+    String busName = "", source = "", destination = "";
+    int availableSeats = 0;
+    Timestamp departureTime = null;
+
+    try {
+        conn = DBConnection.getConnection();
+        ps = conn.prepareStatement("SELECT * FROM buses WHERE id = ?");
+        ps.setInt(1, busId);
+        rs = ps.executeQuery();
+
+        if (rs.next()) {
+            busName = rs.getString("bus_name");
+            source = rs.getString("source");
+            destination = rs.getString("destination");
+            availableSeats = rs.getInt("available_seats");
+            departureTime = rs.getTimestamp("departure_time");
+        }
+        rs.close();
+        ps.close();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+%>
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Confirm Booking</title>
+    <title>Select Your Seat</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-image: url('https://source.unsplash.com/1600x900/?bus,travel'); /* Random bus-related image */
+            background-size: cover;
+            background-position: center;
             margin: 0;
             padding: 0;
-        }
-        .header {
-            background: #007bff;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
         .container {
             width: 50%;
-            margin: auto;
-            text-align: center;
             padding: 20px;
-            background: white;
+            background: rgba(255, 255, 255, 0.9);
             box-shadow: 0px 0px 10px gray;
-            border-radius: 8px;
-            margin-top: 50px;
+            border-radius: 10px;
+            text-align: center;
         }
-        .btn {
-            padding: 10px 20px;
-            font-size: 18px;
-            text-decoration: none;
-            color: white;
-            background: #28a745;
+        .header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .seat-layout {
+            display: grid;
+            grid-template-columns: repeat(5, 50px);
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .seat {
+            width: 45px;
+            height: 45px;
             border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .btn:hover {
-            background: #218838;
+        .available { background-color: green; color: white; }
+        .booked { background-color: red; color: white; cursor: not-allowed; }
+        .selected { background-color: blue !important; color: white; }
+        .confirm-btn {
+            background: #28a745;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+        .confirm-btn:disabled {
+            background: gray;
+            cursor: not-allowed;
         }
     </style>
+    <script>
+        function selectSeat(seatNumber) {
+            let seat = document.getElementById("seat" + seatNumber);
+            let inputField = document.getElementById("selectedSeat");
+
+            if (seat.classList.contains("booked")) return;
+
+            document.querySelectorAll(".seat").forEach(s => s.classList.remove("selected"));
+            seat.classList.add("selected");
+            inputField.value = seatNumber;
+            
+            document.getElementById("confirmButton").disabled = false;
+        }
+    </script>
 </head>
 <body>
 
-    <!-- Include Header -->
-    <jsp:include page="header.jsp" />
-
-    <div class="header">
-        Confirm Booking
-    </div>
-
     <div class="container">
-        <h2>Bus Details</h2>
+        <div class="header">Select Your Seat for <%= busName %></div>
 
-        <%
-            int busId = Integer.parseInt(request.getParameter("busId"));
-            Connection conn = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
+        <p><strong>From:</strong> <%= source %> → <strong>To:</strong> <%= destination %></p>
+        <p><strong>Seats Available:</strong> <%= availableSeats %></p>
+        <p><strong>Departure Time:</strong> <%= departureTime %></p>
 
-            String busName = "", source = "", destination = "";
-            int availableSeats = 0;
-            String departureTime = "";
+        <h3>Select Your Seat</h3>
+        <div class="seat-layout">
+            <% 
+                try {
+                    conn = DBConnection.getConnection();
+                    ps = conn.prepareStatement("SELECT seat_number FROM bookings WHERE bus_id = ? AND status = 'CONFIRMED'");
+                    ps.setInt(1, busId);
+                    rs = ps.executeQuery();
 
-            try {
-                conn = DBConnection.getConnection();
-                ps = conn.prepareStatement("SELECT * FROM buses WHERE id=?");
-                ps.setInt(1, busId);
-                rs = ps.executeQuery();
+                    java.util.Set<Integer> bookedSeats = new java.util.HashSet<>();
+                    while (rs.next()) {
+                        bookedSeats.add(rs.getInt("seat_number"));
+                    }
+                    rs.close();
+                    ps.close();
 
-                if (rs.next()) {
-                    busName = rs.getString("bus_name");
-                    source = rs.getString("source");
-                    destination = rs.getString("destination");
-                    availableSeats = rs.getInt("available_seats");
-                    departureTime = rs.getTimestamp("departure_time").toString();
+                    for (int i = 1; i <= 40; i++) {
+                        boolean isBooked = bookedSeats.contains(i);
+            %>
+                        <div class="seat <%= isBooked ? "booked" : "available" %>" id="seat<%= i %>" onclick="selectSeat(<%= i %>)">
+                            <%= i %>
+                        </div>
+            <%
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    if (conn != null) conn.close();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (rs != null) rs.close();
-                if (ps != null) ps.close();
-                if (conn != null) conn.close();
-            }
-        %>
-
-        <p><b>Bus Name:</b> <%= busName %></p>
-        <p><b>From:</b> <%= source %> → <b>To:</b> <%= destination %></p>
-        <p><b>Seats Available:</b> <%= availableSeats %></p>
-        <p><b>Departure Time:</b> <%= departureTime %></p>
+            %>
+        </div>
 
         <form action="BookBusServlet" method="post">
             <input type="hidden" name="busId" value="<%= busId %>">
-            <input type="submit" class="btn" value="Confirm Booking">
+            <input type="hidden" name="seatNumber" id="selectedSeat" required>
+            <button type="submit" class="confirm-btn" id="confirmButton" disabled>Confirm Booking</button>
         </form>
     </div>
 

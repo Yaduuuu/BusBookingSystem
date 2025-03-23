@@ -1,52 +1,61 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page session="true" %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-image: url('https://source.unsplash.com/1600x900/?office,technology');
+            background-size: cover;
+            background-position: center;
             margin: 0;
             padding: 0;
-        }
-        .header {
-            background: #007bff;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
         .container {
-            width: 80%;
-            margin: auto;
-            text-align: center;
+            width: 60%;
             padding: 20px;
-            background: white;
+            background: rgba(255, 255, 255, 0.9);
             box-shadow: 0px 0px 10px gray;
-            border-radius: 8px;
-            margin-top: 50px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .header {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
         }
         .dashboard-buttons {
             display: flex;
-            justify-content: space-around;
             flex-wrap: wrap;
+            justify-content: center;
             margin-top: 20px;
         }
         .btn {
-            padding: 15px 25px;
+            padding: 15px 30px;
             font-size: 18px;
             text-decoration: none;
             color: white;
             background: #007bff;
             border-radius: 5px;
             margin: 10px;
-            display: inline-block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 200px;
+            transition: 0.3s;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
         }
         .btn:hover {
             background: #0056b3;
+            transform: scale(1.05);
         }
         .logout-btn {
             background: #dc3545;
@@ -54,12 +63,14 @@
         .logout-btn:hover {
             background: #c82333;
         }
+        .btn i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Include Header for Navigation -->
-    <jsp:include page="header.jsp" />
 <%
     String userRole = (String) session.getAttribute("userRole");
     if (userRole == null || !userRole.equalsIgnoreCase("ADMIN")) {
@@ -67,12 +78,10 @@
         return;
     }
 %>
-    <div class="header">
-        Admin Dashboard
-    </div>
 
     <div class="container">
-        <h2>Welcome, Admin</h2>
+        <div class="header">Admin Dashboard</div>
+        <h3>Welcome, Admin</h3>
 
         <div class="dashboard-buttons">
             <a href="manage-buses.jsp" class="btn">🚌 Manage Buses</a>

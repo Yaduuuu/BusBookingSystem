@@ -2,58 +2,113 @@
 <%@ page import="java.sql.*, com.busbooking.dao.DBConnection" %>
 <%@ page session="true" %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Available Buses</title>
     <style>
+        /* General Styling */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-image: url('https://source.unsplash.com/1600x900/?bus,travel'); /* Background Image */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             margin: 0;
             padding: 0;
         }
-        .header {
+
+        /* Navbar */
+        .navbar {
             background: #007bff;
-            color: white;
             padding: 15px;
             text-align: center;
-            font-size: 24px;
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 50px;
         }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .logout-btn {
+            background: #dc3545;
+            padding: 8px 15px;
+            border-radius: 5px;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        /* Main Container */
         .container {
             width: 90%;
             margin: auto;
             text-align: center;
-            padding: 20px;
-            background: white;
-            box-shadow: 0px 0px 10px gray;
-            border-radius: 8px;
-            margin-top: 20px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-top: 40px;
         }
+
+        /* Table Styling */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
             background: white;
+            border-radius: 10px;
+            overflow: hidden;
         }
         th, td {
             padding: 12px;
-            border: 1px solid #ccc;
+            border: 1px solid #ddd;
             text-align: center;
         }
         th {
             background: #007bff;
             color: white;
+            font-size: 18px;
         }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        tr:hover {
+            background: #e9ecef;
+        }
+
+        /* Book Now Button */
         .book-btn {
             background: #28a745;
             color: white;
-            padding: 7px 12px;
+            padding: 8px 15px;
             text-decoration: none;
             border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+            border: none;
         }
         .book-btn:hover {
             background: #218838;
+            transform: scale(1.05);
         }
         .no-buses {
             color: red;
@@ -64,15 +119,20 @@
 </head>
 <body>
 
-    <!-- Include Header -->
-    <jsp:include page="header.jsp" />
-
-    <div class="header">
-        Available Buses
+    <!-- Navbar -->
+    <div class="navbar">
+        <span>🚍 Bus Booking System</span>
+        <div class="nav-links">
+            <a href="index.jsp">🏠 Home</a>
+            <a href="bus-list.jsp">🚆 View Buses</a>
+            <a href="booking-history.jsp">📜 Booking History</a>
+            <a href="LogoutServlet" class="logout-btn">🚪 Logout</a>
+        </div>
     </div>
 
+    <!-- Main Content -->
     <div class="container">
-        <h2>List of Available Buses</h2>
+        <h2>🚌 List of Available Buses</h2>
 
         <table>
             <tr>
@@ -107,9 +167,9 @@
                             <td><%= rs.getTimestamp("departure_time") %></td>
                             <td>
                                 <% if (rs.getInt("available_seats") > 0) { %>
-                                    <a href="booking.jsp?busId=<%= rs.getInt("id") %>" class="book-btn">Book Now</a>
+                                    <a href="booking.jsp?busId=<%= rs.getInt("id") %>" class="book-btn">✅ Book Now</a>
                                 <% } else { %>
-                                    <span style="color: red;">Fully Booked</span>
+                                    <span style="color: red; font-weight: bold;">❌ Fully Booked</span>
                                 <% } %>
                             </td>
                         </tr>
@@ -119,7 +179,7 @@
                     e.printStackTrace();
             %>
                 <tr>
-                    <td colspan="6" style="color: red;">Error fetching bus details.</td>
+                    <td colspan="6" style="color: red;">❌ Error fetching bus details.</td>
                 </tr>
             <%
                 } finally {
@@ -131,7 +191,7 @@
                 if (!busesFound) {
             %>
                 <tr>
-                    <td colspan="6" class="no-buses">No buses available at the moment.</td>
+                    <td colspan="6" class="no-buses">❌ No buses available at the moment.</td>
                 </tr>
             <%
                 }

@@ -63,7 +63,6 @@
 <body>
 
     <!-- Include Header for Navigation -->
-    <jsp:include page="header.jsp" />
 
     <div class="header">
         Edit Bus Details

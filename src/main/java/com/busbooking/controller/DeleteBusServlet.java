@@ -15,28 +15,39 @@ import com.busbooking.dao.DBConnection;
 public class DeleteBusServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        int busId = Integer.parseInt(request.getParameter("busId"));
 
+        int busId = Integer.parseInt(request.getParameter("busId"));
         Connection conn = null;
-        PreparedStatement ps = null;
+        PreparedStatement psDeleteBookings = null, psDeleteBus = null;
 
         try {
             conn = DBConnection.getConnection();
-            String sql = "DELETE FROM buses WHERE id=?";
-            ps = conn.prepareStatement(sql);
-            ps.setInt(1, busId);
+            conn.setAutoCommit(false); // Start transaction
 
-            int rows = ps.executeUpdate();
-            if (rows > 0) {
-                response.sendRedirect("manage-buses.jsp?message=Bus deleted successfully.");
-            } else {
-                response.sendRedirect("manage-buses.jsp?error=Failed to delete bus.");
-            }
+            // Delete all bookings related to this bus
+            String deleteBookingsQuery = "DELETE FROM bookings WHERE bus_id=?";
+            psDeleteBookings = conn.prepareStatement(deleteBookingsQuery);
+            psDeleteBookings.setInt(1, busId);
+            psDeleteBookings.executeUpdate();
+
+            // Now delete the bus
+            String deleteBusQuery = "DELETE FROM buses WHERE id=?";
+            psDeleteBus = conn.prepareStatement(deleteBusQuery);
+            psDeleteBus.setInt(1, busId);
+            psDeleteBus.executeUpdate();
+
+            conn.commit(); // Commit transaction
+            response.sendRedirect("manage-buses.jsp?message=Bus deleted successfully.");
         } catch (Exception e) {
+            try { if (conn != null) conn.rollback(); } catch (Exception ignored) {}
             e.printStackTrace();
-            response.sendRedirect("manage-buses.jsp?error=Error occurred.");
+            response.sendRedirect("manage-buses.jsp?error=Error deleting bus.");
         } finally {
-            try { if (ps != null) ps.close(); if (conn != null) conn.close(); } catch (Exception ignored) {}
+            try {
+                if (psDeleteBookings != null) psDeleteBookings.close();
+                if (psDeleteBus != null) psDeleteBus.close();
+                if (conn != null) conn.close();
+            } catch (Exception ignored) {}
         }
     }
 }
